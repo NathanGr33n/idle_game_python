@@ -1,7 +1,7 @@
 # idle_game.py
 # By: NathanGr33n
 # Updated: June 22, 2025
-# A GUI idle game using Pygame, now with Save/Load functionality
+# A GUI idle game using Pygame with Save/Load and Auto-Save every 30 seconds
 
 # -------- Import Libraries --------
 import pygame               # GUI library for drawing the game window and UI
@@ -112,17 +112,24 @@ def try_purchase(name):
 # -------- Main Game Setup --------
 load_game()                                              # Attempt to load game state on startup
 last_tick = time.time()                                  # Store time of last income generation
+last_auto_save = time.time()                             # Track time of last auto-save
 running = True                                           # Main game loop condition
 
 # -------- Main Game Loop --------
 while running:
-    # Passive income system — adds funds once per second
     now = time.time()                                    # Get current time
+
+    # -------- Passive income system --------
     if now - last_tick >= 1:                             # If 1+ second has passed
         funds += funds_per_second                        # Add funds based on income rate
-        last_tick = now                                  # Reset tick time
+        last_tick = now                                  # Reset income timer
 
-    # Handle events like clicks and window close
+    # -------- Auto-save every 30 seconds --------
+    if now - last_auto_save >= 30:                       # If 30+ seconds passed since last save
+        save_game()                                      # Save game automatically
+        last_auto_save = now                             # Reset auto-save timer
+
+    # -------- Event Handling --------
     for event in pygame.event.get():                     # Loop through all Pygame events
         if event.type == pygame.QUIT:                    # If player tries to close window
             save_game()                                  # Save the game state
@@ -133,7 +140,7 @@ while running:
                 if rect.collidepoint(pos):               # If the click was inside a button
                     try_purchase(name)                   # Try to buy that upgrade
 
-    # Redraw the entire screen with updated data
+    # -------- Redraw the screen --------
     draw_ui()                                            # Draw the UI and upgrades
     pygame.display.flip()                                # Update the display with the new frame
     clock.tick(60)                                       # Limit the game to 60 frames per second

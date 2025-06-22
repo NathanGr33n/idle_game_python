@@ -1,29 +1,29 @@
 # idle_game.py
 # By: NathanGr33n
 # Updated: June 22, 2025
-# A GUI idle game using Pygame with Save/Load and Auto-Save every 30 seconds
+# A GUI idle game using Pygame with Save/Load, Auto-Save, and Animated Glowing Upgrade Buttons
 
 # -------- Import Libraries --------
-import pygame               # GUI library for drawing the game window and UI
-import time                 # Used to track elapsed time for passive income
-import sys                  # Allows for clean exit from the Python program
-import json                 # For saving/loading game data in JSON format
-import os                   # Used to check if a file exists
+import pygame               # GUI framework
+import time                 # Used for timing
+import sys                  # Clean program exit
+import json                 # Save/load game data
+import os                   # Check if save file exists
+import math                 # Used for sine wave animation for glowing effect
 
 # -------- Initialize Pygame --------
-pygame.init()                                           # Initialize all Pygame modules
-WIDTH, HEIGHT = 800, 600                                # Set the width and height of the game window
-screen = pygame.display.set_mode((WIDTH, HEIGHT))       # Create the game window with the given size
-pygame.display.set_caption("Idle Game GUI")             # Set the window title
-clock = pygame.time.Clock()                             # Create a clock object to control frame rate
-font = pygame.font.SysFont(None, 28)                    # Set default font for text (size 28)
+pygame.init()                                                   # Initialize all Pygame modules
+WIDTH, HEIGHT = 800, 600                                        # Screen dimensions
+screen = pygame.display.set_mode((WIDTH, HEIGHT))               # Create game window
+pygame.display.set_caption("Idle Game GUI")                     # Set window title
+clock = pygame.time.Clock()                                     # Frame rate manager
+font = pygame.font.SysFont(None, 28)                            # Default font for text
 
 # -------- Game State Variables --------
-funds = 0                                                # Player's total funds
-funds_per_second = 1                                     # How many funds the player earns each second
+funds = 0                                                       # Total funds player owns
+funds_per_second = 1                                            # Passive income per second
 
-# Dictionary of upgrades the player can buy
-# Each entry has a name, cost, income rate (cps = currency per second), and owned count
+# Dictionary of upgrade definitions (cost, cps = income rate, owned = how many player owns)
 upgrades = {
     "Employment": {"cost": 25, "cps": 2, "owned": 0},
     "Treasury Bonds": {"cost": 100, "cps": 4, "owned": 0},
@@ -34,117 +34,126 @@ upgrades = {
     "Real Estate": {"cost": 50000, "cps": 35, "owned": 0},
 }
 
-SAVE_FILE = "idle_save.json"                             # File name to store saved game state
+SAVE_FILE = "idle_save.json"                                     # Save file path
 
-# -------- Save/Load Functions --------
+# -------- UI Layout Settings --------
+BUTTON_WIDTH = WIDTH - 60                                       # Button spans nearly full width
+BUTTON_HEIGHT = 60                                              # Taller button
+PADDING = 10                                                    # Space between buttons
+MARGIN_TOP = 100                                                # Vertical offset for upgrade buttons
+button_rects = {}                                               # Store clickable areas for buttons
+
+# -------- Save and Load Functions --------
 
 def save_game():
-    """Save the current game state into a JSON file."""
+    """Save current game state to a file."""
     data = {
-        "funds": funds,                                  # Save player's funds
-        "funds_per_second": funds_per_second,            # Save current income rate
-        "upgrades": upgrades                             # Save owned upgrades and their states
+        "funds": funds,
+        "funds_per_second": funds_per_second,
+        "upgrades": upgrades
     }
-    with open(SAVE_FILE, "w") as f:                      # Open the file in write mode
-        json.dump(data, f, indent=4)                     # Write JSON data to file
-    print("Game saved.")                                 # Confirm save in console
+    with open(SAVE_FILE, "w") as f:
+        json.dump(data, f, indent=4)
+    print("Game saved.")
 
 def load_game():
-    """Load game state from the save file if it exists."""
-    global funds, funds_per_second, upgrades             # Reference the global game state variables
-    if os.path.exists(SAVE_FILE):                        # Check if the save file exists
-        with open(SAVE_FILE, "r") as f:                  # Open the file in read mode
-            data = json.load(f)                          # Parse JSON data into a Python dictionary
-            funds = data.get("funds", 0)                 # Load saved funds or default to 0
-            funds_per_second = data.get("funds_per_second", 1)  # Load income or default to 1
-
-            saved_upgrades = data.get("upgrades", {})    # Load saved upgrade states
-            for name in upgrades:                        # For each default upgrade
-                if name in saved_upgrades:               # If it exists in the saved file
-                    upgrades[name].update(saved_upgrades[name])  # Merge saved values into current upgrade
-        print("Game loaded.")                            # Confirm load in console
+    """Load game state from save file if it exists."""
+    global funds, funds_per_second, upgrades
+    if os.path.exists(SAVE_FILE):
+        with open(SAVE_FILE, "r") as f:
+            data = json.load(f)
+            funds = data.get("funds", 0)
+            funds_per_second = data.get("funds_per_second", 1)
+            saved_upgrades = data.get("upgrades", {})
+            for name in upgrades:
+                if name in saved_upgrades:
+                    upgrades[name].update(saved_upgrades[name])
+        print("Game loaded.")
     else:
-        print("No save file found. Starting new game.")  # Inform the user if there's no save data
+        print("No save file found. Starting new game.")
 
-# -------- UI Layout Configuration --------
-BUTTON_WIDTH = 300                                       # Width of each upgrade button
-BUTTON_HEIGHT = 40                                       # Height of each upgrade button
-PADDING = 10                                             # Vertical spacing between buttons
-MARGIN_TOP = 100                                         # Top margin for the first button
-button_rects = {}                                        # Dictionary to hold clickable button rectangles
-
-# -------- UI Drawing Functions --------
+# -------- UI Drawing --------
 
 def draw_text(text, x, y, color=(255, 255, 255)):
-    """Draw a single line of text at (x, y) using the default font."""
-    label = font.render(text, True, color)               # Render the text surface
-    screen.blit(label, (x, y))                           # Draw the text on the screen
+    """Draw a line of text at position (x, y) in specified color."""
+    label = font.render(text, True, color)
+    screen.blit(label, (x, y))
 
 def draw_ui():
-    """Draw the current funds, income rate, and all upgrade buttons."""
-    screen.fill((30, 30, 30))                            # Clear the screen with a dark gray background
+    """Draw UI with animated glowing upgrade buttons."""
+    screen.fill((30, 30, 30))                                   # Fill background with dark gray
 
-    draw_text(f"Funds: ${int(funds)}", 30, 20)           # Show the total funds
-    draw_text(f"Funds/sec: {funds_per_second}", 30, 50)  # Show the income rate
+    draw_text(f"Funds: ${int(funds)}", 30, 20)                  # Display current funds
+    draw_text(f"Funds/sec: {funds_per_second}", 30, 50)         # Display income rate
 
-    y = MARGIN_TOP                                       # Start placing buttons from this y position
-    for name, data in upgrades.items():                  # Loop through each upgrade
-        rect = pygame.Rect(30, y, BUTTON_WIDTH, BUTTON_HEIGHT)  # Define the button area
-        button_rects[name] = rect                        # Save this button's rect for click detection
-        pygame.draw.rect(screen, (70, 130, 180), rect)   # Draw the button background
-        pygame.draw.rect(screen, (255, 255, 255), rect, 2)  # Draw the white border
+    # Calculate glow transparency using sine wave (pulsing effect)
+    tick = pygame.time.get_ticks() / 1000.0                     # Time in seconds
+    glow_alpha = int(80 + 50 * math.sin(tick * 2))              # Pulsing between 30–130
+
+    y = MARGIN_TOP                                              # Start button vertical position
+    for name, data in upgrades.items():
+        rect = pygame.Rect(30, y, BUTTON_WIDTH, BUTTON_HEIGHT)  # Create button rectangle
+        button_rects[name] = rect                               # Save for click detection
+
+        # Create semi-transparent green glow
+        glow_surface = pygame.Surface((BUTTON_WIDTH, BUTTON_HEIGHT), pygame.SRCALPHA)
+        glow_surface.fill((0, 255, 0, glow_alpha))              # Bright green glow w/ variable alpha
+        screen.blit(glow_surface, rect.topleft)                 # Draw glow beneath button
+
+        pygame.draw.rect(screen, (34, 94, 58), rect)            # Draw dark green button background
+        pygame.draw.rect(screen, (255, 255, 255), rect, 2)      # Draw white border around button
+
         label = f"{name}: {data['owned']} owned | +{data['cps']} cps | Cost: ${data['cost']}"
-        draw_text(label, rect.x + 10, rect.y + 10)       # Draw upgrade information inside button
-        y += BUTTON_HEIGHT + PADDING                     # Move down for next button
+        draw_text(label, rect.x + 15, rect.y + 18)              # Draw upgrade text
+        y += BUTTON_HEIGHT + PADDING                           # Move down for next button
 
 # -------- Game Logic --------
 
 def try_purchase(name):
-    """Attempt to buy the upgrade with the given name."""
-    global funds, funds_per_second                       # Access global game state
-    item = upgrades[name]                                # Get the upgrade dictionary
-    if funds >= item["cost"]:                            # Only allow purchase if player can afford it
-        funds -= item["cost"]                            # Deduct the upgrade cost from funds
-        item["owned"] += 1                               # Increase the number of upgrades owned
-        funds_per_second += item["cps"]                  # Increase passive income
-        item["cost"] = int(item["cost"] * 1.125)         # Increase future cost of this upgrade
+    """Try to purchase an upgrade if player has enough funds."""
+    global funds, funds_per_second
+    item = upgrades[name]
+    if funds >= item["cost"]:
+        funds -= item["cost"]
+        item["owned"] += 1
+        funds_per_second += item["cps"]
+        item["cost"] = int(item["cost"] * 1.125)               # Increase future cost
 
-# -------- Main Game Setup --------
-load_game()                                              # Attempt to load game state on startup
-last_tick = time.time()                                  # Store time of last income generation
-last_auto_save = time.time()                             # Track time of last auto-save
-running = True                                           # Main game loop condition
+# -------- Initialize Game --------
+load_game()                                                    # Load save on startup
+last_tick = time.time()                                        # Timer for income generation
+last_auto_save = time.time()                                   # Timer for auto-saving
+running = True                                                 # Main loop condition
 
 # -------- Main Game Loop --------
 while running:
-    now = time.time()                                    # Get current time
+    now = time.time()                                          # Get current time
 
-    # -------- Passive income system --------
-    if now - last_tick >= 1:                             # If 1+ second has passed
-        funds += funds_per_second                        # Add funds based on income rate
-        last_tick = now                                  # Reset income timer
+    # Passive income (1 fund tick per second)
+    if now - last_tick >= 1:
+        funds += funds_per_second
+        last_tick = now
 
-    # -------- Auto-save every 30 seconds --------
-    if now - last_auto_save >= 30:                       # If 30+ seconds passed since last save
-        save_game()                                      # Save game automatically
-        last_auto_save = now                             # Reset auto-save timer
+    # Auto-save every 30 seconds
+    if now - last_auto_save >= 30:
+        save_game()
+        last_auto_save = now
 
-    # -------- Event Handling --------
-    for event in pygame.event.get():                     # Loop through all Pygame events
-        if event.type == pygame.QUIT:                    # If player tries to close window
-            save_game()                                  # Save the game state
-            running = False                              # End the main loop
-        elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:  # If left mouse click
-            pos = event.pos                              # Get mouse click position
-            for name, rect in button_rects.items():      # Loop through upgrade buttons
-                if rect.collidepoint(pos):               # If the click was inside a button
-                    try_purchase(name)                   # Try to buy that upgrade
+    # Handle user input events
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            save_game()                                        # Save on quit
+            running = False
+        elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            pos = event.pos
+            for name, rect in button_rects.items():
+                if rect.collidepoint(pos):
+                    try_purchase(name)
 
-    # -------- Redraw the screen --------
-    draw_ui()                                            # Draw the UI and upgrades
-    pygame.display.flip()                                # Update the display with the new frame
-    clock.tick(60)                                       # Limit the game to 60 frames per second
+    draw_ui()                                                  # Draw the interface
+    pygame.display.flip()                                      # Update the screen
+    clock.tick(60)                                             # Cap frame rate to 60 FPS
 
 # -------- Clean Exit --------
-pygame.quit()                                            # Shut down Pygame
-sys.exit()                                               # Exit the Python interpreter
+pygame.quit()                                                  # Close Pygame
+sys.exit()                                                     # End program

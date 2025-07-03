@@ -11,8 +11,23 @@ from config import WIDTH, HEIGHT  # Screen dimensions from config
 from data import upgrades, achievements  # Game data definitions (upgrades and achievements)
 from state import save_game, load_game   # Game state save/load functions
 from logic import try_purchase, check_achievements  # Core game logic (purchases, achievements)
-from ui import (draw_ui, draw_menu, get_button_rects,
-                draw_offline_popup)  # Drawing functions including the new offline popup
+from ui import (draw_ui, draw_menu, get_button_rects, draw_offline_popup)  # Drawing functions including the new offline popup
+                
+# -------- Initialize Pygame & Music --------
+pygame.init()
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Idle Game GUI")
+clock = pygame.time.Clock()
+
+# Initialize Pygame mixer for music
+pygame.mixer.init()
+
+# Load background music from your provided file
+pygame.mixer.music.load("music/8bit_background_music.mp3")
+
+# Start playing the music on loop (-1 means infinite loop)
+pygame.mixer.music.play(-1)
+
 
 # -------- Initialize Pygame --------
 pygame.init()

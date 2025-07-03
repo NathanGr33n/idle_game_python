@@ -90,3 +90,56 @@ def draw_menu(screen):
 def get_button_rects():
     """Return the latest button rectangles for click detection."""
     return button_rects
+    
+def draw_offline_popup(screen, offline_earnings, offline_seconds):
+    """Draws an in-game popup showing offline earnings with a Close button."""
+
+    # Create a semi-transparent overlay that darkens the entire screen
+    overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)  # Enable transparency
+    overlay.fill((0, 0, 0, 180))  # Semi-transparent black (alpha 180 for 70% opacity)
+    screen.blit(overlay, (0, 0))  # Draw the overlay on the screen
+
+    # Define popup window dimensions and center it on the screen
+    popup_width = 500
+    popup_height = 200
+    popup_rect = pygame.Rect(
+        (WIDTH - popup_width) // 2,  # Center horizontally
+        (HEIGHT - popup_height) // 2,  # Center vertically
+        popup_width,
+        popup_height
+    )
+
+    # Draw the popup background and border
+    pygame.draw.rect(screen, BUTTON_COLOR, popup_rect)  # Popup background
+    pygame.draw.rect(screen, BORDER_COLOR, popup_rect, 3)  # Popup border with 3px thickness
+
+    # Prepare text lines to display inside the popup
+    lines = [
+        "Welcome Back!",
+        f"You earned ${offline_earnings} while offline",
+        f"for {offline_seconds} seconds."
+    ]
+
+    # Draw text lines inside the popup with vertical spacing
+    y = popup_rect.y + 20  # Starting y position inside popup
+    for line in lines:
+        draw_text(screen, line, popup_rect.x + 20, y)  # Draw each line
+        y += 40  # Move down for next line
+
+    # Define the "Close" button inside the popup
+    close_rect = pygame.Rect(
+        popup_rect.centerx - 60,  # Center horizontally inside popup
+        popup_rect.bottom - 50,   # Near the bottom of popup
+        120,                      # Button width
+        40                        # Button height
+    )
+
+    # Draw the Close button background and border
+    pygame.draw.rect(screen, BUTTON_COLOR, close_rect)
+    pygame.draw.rect(screen, BORDER_COLOR, close_rect, 2)
+
+    # Draw the text on the Close button
+    draw_text(screen, "Close", close_rect.x + 30, close_rect.y + 10)
+
+    # Return the Close button rectangle for click detection in main.py
+    return close_rect

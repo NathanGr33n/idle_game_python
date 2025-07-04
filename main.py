@@ -30,6 +30,7 @@ state = {  # Initialize state dictionary for runtime game state
     'funds': funds,
     'funds_per_second': funds_per_second,
     'upgrades': upgrades
+    'theme': 'dark' #start in darkmode by default
 }
 
 # -------- Calculate Offline Earnings --------

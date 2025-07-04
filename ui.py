@@ -87,6 +87,13 @@ def draw_menu(screen):
     pygame.draw.rect(screen, BORDER_COLOR, achievements_rect, 2)
     draw_text(screen, "Achievements", achievements_rect.x + 15, achievements_rect.y + 18)
     button_rects["Achievements"] = achievements_rect
+    
+    # "Toggle Theme" button
+    theme_rect = pygame.Rect(WIDTH // 2 - BUTTON_WIDTH // 2, 440, BUTTON_WIDTH, BUTTON_HEIGHT)
+    pygame.draw.rect(screen, BUTTON_COLOR, theme_rect)
+    pygame.draw.rect(screen, BORDER_COLOR, theme_rect, 2)
+    draw_text(screen, "Toggle Theme", theme_rect.x + 15, theme_rect.y + 18)
+    button_rects["Toggle Theme"] = theme_rect
 
     # "Exit" button
     exit_rect = pygame.Rect(WIDTH // 2 - BUTTON_WIDTH // 2, 360, BUTTON_WIDTH, BUTTON_HEIGHT)

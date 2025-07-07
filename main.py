@@ -1,7 +1,8 @@
 # main.py
 # By: NathanGr33n
 # Updated: July 2025
-# Main entry point for the Idle Game with GUI, upgrades, save/load, achievements, offline income popup, background music, and Achievements screen.
+# Main entry point for the Idle Game with GUI, upgrades, save/load, achievements,
+# offline income popup, background music, Achievements screen, and Light/Dark Theme Toggle.
 
 # -------- Import Libraries --------
 import pygame                   # Pygame for GUI and event handling
@@ -29,8 +30,8 @@ funds, funds_per_second, last_played = load_game(upgrades, achievements)  # Load
 state = {  # Initialize state dictionary for runtime game state
     'funds': funds,
     'funds_per_second': funds_per_second,
-    'upgrades': upgrades
-    'theme': 'dark' #start in darkmode by default
+    'upgrades': upgrades,
+    'theme': 'dark'  # Start in dark mode by default
 }
 
 # -------- Calculate Offline Earnings --------
@@ -69,7 +70,7 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:  # Quit event (window close)
             save_game(state['funds'], state['funds_per_second'], state['upgrades'], achievements)
-            running = False
+            running = False  # Exit the game loop
 
         elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:  # Handle left click
             pos = event.pos  # Get mouse position
@@ -87,6 +88,9 @@ while running:
                         current_screen = "game"  # Switch to game screen
                     elif buttons.get("Achievements") and buttons["Achievements"].collidepoint(pos):
                         current_screen = "achievements"  # Switch to achievements screen
+                    elif buttons.get("Toggle Theme") and buttons["Toggle Theme"].collidepoint(pos):
+                        # Toggle between light and dark themes
+                        state['theme'] = "light" if state['theme'] == "dark" else "dark"
                     elif buttons.get("Exit") and buttons["Exit"].collidepoint(pos):
                         save_game(state['funds'], state['funds_per_second'], state['upgrades'], achievements)
                         running = False  # Exit game
@@ -108,17 +112,19 @@ while running:
 
     # -------- Draw Current Screen --------
     if current_screen == "menu":
-        draw_menu(screen)  # Draw Main Menu
+        draw_menu(screen, state['theme'])  # Draw Main Menu with theme
     elif current_screen == "game":
-        draw_ui(screen, state, state['upgrades'], achievements)  # Draw Game UI
+        draw_ui(screen, state, state['upgrades'], achievements, state['theme'])  # Draw Game UI
     elif current_screen == "achievements":
-        draw_achievements_screen(screen, achievements)  # Draw Achievements Screen
+        draw_achievements_screen(screen, achievements, state['theme'])  # Draw Achievements Screen
 
     # Draw offline earnings popup (always on top if active)
     if showing_offline_popup:
-        offline_popup_close_button = draw_offline_popup(screen, offline_earnings, offline_seconds)
+        offline_popup_close_button = draw_offline_popup(
+            screen, offline_earnings, offline_seconds, state['theme']
+        )
     else:
-        offline_popup_close_button = None
+        offline_popup_close_button = None  # No popup active
 
     # -------- Update Display --------
     pygame.display.flip()  # Update the window with everything drawn

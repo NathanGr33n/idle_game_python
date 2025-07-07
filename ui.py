@@ -1,25 +1,36 @@
 # ui.py
 # By: NathanGr33n
 # Updated: July 2025
-# Handles all drawing and rendering in the Pygame window, including Main Menu, Game UI, Achievements screen, and the offline earnings popup.
+# Handles all drawing and rendering in the Pygame window, including Main Menu, Game UI,
+# Achievements screen, and the offline earnings popup, with light/dark theme support.
 
 import pygame
 import math  # For animated glow effects
 from config import (WIDTH, HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, PADDING,
                     MARGIN_TOP, BG_COLOR, BUTTON_COLOR, TEXT_COLOR,
-                    BORDER_COLOR, FONT_SIZE, GLOW_COLOR)
+                    BORDER_COLOR, FONT_SIZE, GLOW_COLOR, THEMES)
 
 # Dictionary to store all clickable button rectangles (used for click detection)
 button_rects = {}
 
+def apply_theme(theme_name):
+    """Load theme colors based on the current theme name."""
+    theme = THEMES[theme_name]  # Select theme dictionary
+    global BG_COLOR, BUTTON_COLOR, TEXT_COLOR, BORDER_COLOR  # Use as globals
+    BG_COLOR = theme['BG_COLOR']
+    BUTTON_COLOR = theme['BUTTON_COLOR']
+    TEXT_COLOR = theme['TEXT_COLOR']
+    BORDER_COLOR = theme['BORDER_COLOR']
+
 def draw_text(surface, text, x, y, color=TEXT_COLOR):
     """Draw a line of text onto the screen at position (x, y)."""
-    font = pygame.font.SysFont(None, FONT_SIZE)  # Create the font (safe after pygame.init())
+    font = pygame.font.SysFont(None, FONT_SIZE)  # Create the font
     label = font.render(text, True, color)  # Render text onto surface
     surface.blit(label, (x, y))  # Draw text onto the screen
 
-def draw_ui(screen, state, upgrades, achievements):
+def draw_ui(screen, state, upgrades, achievements, theme):
     """Draws the in-game UI, including funds, upgrade buttons, achievements, and back button."""
+    apply_theme(theme)  # Apply selected theme
     screen.fill(BG_COLOR)  # Clear screen with background color
 
     # Draw player's current funds and income per second
@@ -67,8 +78,9 @@ def draw_ui(screen, state, upgrades, achievements):
             draw_text(screen, f"\u2714 {name}", WIDTH - 320, y2)  # ✔ symbol for unlocked
             y2 += 25
 
-def draw_menu(screen):
-    """Draw the Main Menu screen with Start, Achievements, and Exit buttons."""
+def draw_menu(screen, theme):
+    """Draw the Main Menu screen with Start, Achievements, Toggle Theme, and Exit buttons."""
+    apply_theme(theme)  # Apply selected theme
     screen.fill((15, 15, 15))  # Dark background for menu
 
     # Draw title
@@ -87,13 +99,6 @@ def draw_menu(screen):
     pygame.draw.rect(screen, BORDER_COLOR, achievements_rect, 2)
     draw_text(screen, "Achievements", achievements_rect.x + 15, achievements_rect.y + 18)
     button_rects["Achievements"] = achievements_rect
-    
-    # "Toggle Theme" button
-    theme_rect = pygame.Rect(WIDTH // 2 - BUTTON_WIDTH // 2, 440, BUTTON_WIDTH, BUTTON_HEIGHT)
-    pygame.draw.rect(screen, BUTTON_COLOR, theme_rect)
-    pygame.draw.rect(screen, BORDER_COLOR, theme_rect, 2)
-    draw_text(screen, "Toggle Theme", theme_rect.x + 15, theme_rect.y + 18)
-    button_rects["Toggle Theme"] = theme_rect
 
     # "Exit" button
     exit_rect = pygame.Rect(WIDTH // 2 - BUTTON_WIDTH // 2, 360, BUTTON_WIDTH, BUTTON_HEIGHT)
@@ -102,8 +107,16 @@ def draw_menu(screen):
     draw_text(screen, "Exit", exit_rect.x + 15, exit_rect.y + 18)
     button_rects["Exit"] = exit_rect
 
-def draw_achievements_screen(screen, achievements):
+    # "Toggle Theme" button
+    theme_rect = pygame.Rect(WIDTH // 2 - BUTTON_WIDTH // 2, 440, BUTTON_WIDTH, BUTTON_HEIGHT)
+    pygame.draw.rect(screen, BUTTON_COLOR, theme_rect)
+    pygame.draw.rect(screen, BORDER_COLOR, theme_rect, 2)
+    draw_text(screen, "Toggle Theme", theme_rect.x + 15, theme_rect.y + 18)
+    button_rects["Toggle Theme"] = theme_rect
+
+def draw_achievements_screen(screen, achievements, theme):
     """Draws the Achievements screen showing all achievements with status and description."""
+    apply_theme(theme)  # Apply selected theme
     screen.fill((25, 25, 25))  # Darker background for achievements screen
 
     # Draw title
@@ -112,7 +125,6 @@ def draw_achievements_screen(screen, achievements):
     # Display all achievements with their status and descriptions
     y = 100
     for name, data in achievements.items():
-        # Checkmark if unlocked, lock icon otherwise
         status = "\u2714" if data["unlocked"] else "\U0001F512"  # ✔ or 🔒
         draw_text(screen, f"{status} {name}", 50, y)  # Achievement name with status icon
         y += 30
@@ -126,10 +138,11 @@ def draw_achievements_screen(screen, achievements):
     draw_text(screen, "Back to Menu", back_rect.x + 15, back_rect.y + 18)
     button_rects["Back to Menu"] = back_rect
 
-def draw_offline_popup(screen, offline_earnings, offline_seconds):
+def draw_offline_popup(screen, offline_earnings, offline_seconds, theme):
     """Draws a popup window showing offline earnings with a Close button."""
+    apply_theme(theme)  # Apply selected theme
     overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)  # Transparent overlay
-    overlay.fill((0, 0, 0, 180))  # Semi-transparent black
+    overlay.fill((0, 0, 0, 180))  # Semi-transparent black overlay
     screen.blit(overlay, (0, 0))
 
     # Define popup dimensions and center it

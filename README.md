@@ -2,16 +2,17 @@
 By: NathanGr33n
 =========================================================================================================================================
 An idle/incremental game built using Python and Pygame where the player earns money passively and can purchase various upgrades
-to increase income over time. The game also includes achievements, animated GUI, save/load functionality, and a modular code structure.
+to increase income over time. The game also includes achievements, animated GUI, save/load functionality, and Offline Income Generation/Calculation.
 =========================================================================================================================================
 Features:
 	- Clickable Upgrade Buttons
 	- Passive Income Per Second
 	- Achievements with Conditions and Notifications
 	- Save/Load progress using JSON
-	- Auto-Save every 30secs
+	- Auto-Save/30secs
 	- Animated Glow Effects for Upgrade Buttons
-	- Fully Modular Design with Cleanly Separated Files
+	- Offline Income Generation/Calculation
+	- Lightmode + Darkmode
 =========================================================================================================================================
 Project Structure:
 
